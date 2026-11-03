@@ -1,7 +1,9 @@
+
 services:
   postgres:
     image: postgres:16
     container_name: sentinel-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: sentinel
       POSTGRES_PASSWORD: change_me_local_only
