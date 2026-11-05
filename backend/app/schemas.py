@@ -1,45 +1,27 @@
 
-from typing import Optional
-from datetime import datetime
+from typing import Optional, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, EmailStr, Field
 
 
-class OrgCreate(BaseModel):
+class RegisterIn(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+    org_name: str
+
+
+class LoginIn(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class ApiKeyCreate(BaseModel):
     name: str
 
 
 class EventIn(BaseModel):
-    org_id: int
-    timestamp: Optional[datetime] = None
-
-    source_ip: Optional[str] = None
-    dest_ip: Optional[str] = None
-    event_type: Optional[str] = None
-    username: Optional[str] = None
-    success: Optional[bool] = None
-
+    event_type: Literal["network_flow", "auth", "web_request"]
+    source_ip: str
     features: Optional[dict[str, float]] = None
-
-
-class OrganizationOut(BaseModel):
-    id: int
-    name: str
-    api_key: str
-    created_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class EventOut(BaseModel):
-    id: int
-    org_id: int
-    timestamp: datetime
-    source_ip: Optional[str] = None
-    dest_ip: Optional[str] = None
-    event_type: Optional[str] = None
-    username: Optional[str] = None
     success: Optional[bool] = None
-    features: Optional[dict[str, float]] = None
-
-    model_config = ConfigDict(from_attributes=True)
+    request_path: Optional[str] = None

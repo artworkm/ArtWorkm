@@ -30,7 +30,7 @@ class SecurityEvent(Base):
     username = Column(String)
     success = Column(Boolean)
     features = Column(JSON)
-
+    request_path = Column(String, nullable=True)
     organization = relationship("Organization", back_populates="events")
     detections = relationship("DetectionResult", back_populates="event")
 
@@ -49,3 +49,35 @@ class DetectionResult(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     event = relationship("SecurityEvent", back_populates="detections")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    role = Column(String(20), default="admin")
+    org_id = Column(
+        Integer,
+        ForeignKey("organizations.id"),
+        nullable=False,
+        index=True
+    )
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ApiKey(Base):
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    org_id = Column(
+        Integer,
+        ForeignKey("organizations.id"),
+        nullable=False,
+        index=True
+    )
+    name = Column(String(100), nullable=False)
+    key_hash = Column(String(64), unique=True, nullable=False, index=True)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

@@ -14,3 +14,9 @@ psycopg2-binary
 pydantic
 python-dotenv
 requests
+bcrypt
+pyjwt
+slowapi
+pytest
+httpx
+email-validator

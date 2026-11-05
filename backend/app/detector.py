@@ -1,7 +1,5 @@
-
 import json
 import joblib
-
 import pandas as pd
 
 from pathlib import Path
@@ -14,12 +12,32 @@ MODEL_PATH = MODEL_DIR / "ids_rf.joblib"
 FEATURES_PATH = MODEL_DIR / "features.json"
 
 
-# Load the trained model.
-model = joblib.load(MODEL_PATH)
+# These are loaded only when the first prediction is requested.
+model = None
+feature_names = None
 
-# Load the exact feature names and their order.
-with open(FEATURES_PATH, "r") as file:
-    feature_names = json.load(file)
+
+def load_model():
+    """Load the trained model and feature names when needed."""
+    global model, feature_names
+
+    if model is None:
+        if not MODEL_PATH.exists():
+            raise FileNotFoundError(
+                f"Model file not found: {MODEL_PATH}"
+            )
+
+        if not FEATURES_PATH.exists():
+            raise FileNotFoundError(
+                f"Feature file not found: {FEATURES_PATH}"
+            )
+
+        model = joblib.load(MODEL_PATH)
+
+        with open(FEATURES_PATH, "r") as file:
+            feature_names = json.load(file)
+
+    return model, feature_names
 
 
 def detect(features: dict):
@@ -27,25 +45,27 @@ def detect(features: dict):
     Run the Random Forest model on one network event.
 
     Missing feature values are filled with 0.0.
+    Returns the original Phase 1B result dictionary.
     """
 
     if not isinstance(features, dict):
         raise ValueError("Features must be provided as a dictionary.")
 
+    loaded_model, names = load_model()
+
     # Arrange input features in exactly the training order.
     row = {
         name: float(features.get(name, 0.0))
-        for name in feature_names
+        for name in names
     }
 
-    # Create a DataFrame with the original feature names.
-    input_data = pd.DataFrame([row], columns=feature_names)
+    input_data = pd.DataFrame([row], columns=names)
 
     # Predict the attack category.
-    prediction = model.predict(input_data)[0]
+    prediction = loaded_model.predict(input_data)[0]
 
     # Get prediction probabilities.
-    probabilities = model.predict_proba(input_data)[0]
+    probabilities = loaded_model.predict_proba(input_data)[0]
     confidence = float(max(probabilities))
 
     predicted_label = str(prediction)
@@ -67,3 +87,20 @@ def detect(features: dict):
             f"Random Forest classified this event as {predicted_label}."
         )
     }
+
+
+def predict_flow(features: dict):
+    """
+    Phase 1C interface.
+
+    Returns:
+        (predicted_label, confidence, severity)
+    """
+
+    result = detect(features)
+
+    return (
+        result["predicted_label"],
+        result["confidence"],
+        result["severity"]
+    )
