@@ -25,3 +25,13 @@ class EventIn(BaseModel):
     features: Optional[dict[str, float]] = None
     success: Optional[bool] = None
     request_path: Optional[str] = None
+
+
+class AnalysisOut(BaseModel):
+    summary: str
+    likely_attack_technique: str
+    severity_assessment: Literal["low", "medium", "high", "critical"]
+    evidence_used: list[str]
+    recommended_actions: list[str]
+    confidence: Literal["low", "medium", "high"]
+    limitations: str

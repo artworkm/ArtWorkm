@@ -49,6 +49,9 @@ export default function Dashboard({ onLogout }) {
   const [error, setError] = useState("");
   const [keyLoading, setKeyLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [analysisLoadingId, setAnalysisLoadingId] = useState(null);
+  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+  const [analysisError, setAnalysisError] = useState("");
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -150,6 +153,29 @@ export default function Dashboard({ onLogout }) {
       await navigator.clipboard.writeText(newKey);
     } catch {
       setError("Clipboard access failed. Select and copy the key manually.");
+    }
+  }
+
+    async function analyzeDetection(detectionId) {
+    setAnalysisLoadingId(detectionId);
+    setAnalysisError("");
+    setSelectedAnalysis(null);
+
+    try {
+      const response = await api.post(
+        `/detections/${detectionId}/analyze`
+      );
+
+      setSelectedAnalysis(response.data);
+    } catch (err) {
+      console.error("Detection analysis failed:", err);
+
+      setAnalysisError(
+        err.response?.data?.detail ||
+        "Could not analyze this detection. Please check the backend and try again."
+      );
+    } finally {
+      setAnalysisLoadingId(null);
     }
   }
 
@@ -429,6 +455,7 @@ export default function Dashboard({ onLogout }) {
                   <th>SEVERITY</th>
                   <th>CONFIDENCE</th>
                   <th>DETECTION ENGINE</th>
+                  <th>ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -476,12 +503,24 @@ export default function Dashboard({ onLogout }) {
                     <td className="engine-cell">
                       {detection.model_name || "Unknown"}
                     </td>
+
+                    <td>
+  <button
+    className="analyze-button"
+    onClick={() => analyzeDetection(detection.id)}
+    disabled={analysisLoadingId === detection.id}
+  >
+    {analysisLoadingId === detection.id
+      ? "Analyzing..."
+      : "Analyze"}
+  </button>
+</td>
                   </tr>
                 ))}
 
                 {detections.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="empty-table">
+                    <td colSpan="6" className="empty-table">
                       No detections recorded yet. Your dashboard is ready
                       and waiting for security events.
                     </td>
@@ -496,6 +535,121 @@ export default function Dashboard({ onLogout }) {
             {detections.length} loaded detections
           </div>
         </section>
+
+
+{analysisError && (
+  <div className="notice error-notice">
+    {analysisError}
+  </div>
+)}
+
+{selectedAnalysis && (
+  <section className="panel analysis-panel">
+    <div className="analysis-header">
+      <div>
+        <p className="analysis-eyebrow">AI THREAT ANALYSIS</p>
+        <h2>Detection Analysis</h2>
+        <p className="analysis-meta">
+          Model: {selectedAnalysis.model}{" "}
+          |{" "}
+          {selectedAnalysis.grounded
+            ? "Grounded in retrieved sources"
+            : "Insufficient source grounding"}
+        </p>
+      </div>
+
+      <button
+        className="copy-button"
+        onClick={() => setSelectedAnalysis(null)}
+      >
+        Close
+      </button>
+    </div>
+
+    <div className="analysis-section">
+      <h3>Summary</h3>
+      <p>{selectedAnalysis.analysis.summary}</p>
+    </div>
+
+    <div className="analysis-grid">
+      <div className="analysis-section">
+        <h3>Likely Attack Technique</h3>
+        <p>
+          {selectedAnalysis.analysis.likely_attack_technique}
+        </p>
+      </div>
+
+      <div className="analysis-section">
+        <h3>Severity Assessment</h3>
+        <p>
+          {selectedAnalysis.analysis.severity_assessment.toUpperCase()}
+        </p>
+      </div>
+
+      <div className="analysis-section">
+        <h3>Confidence</h3>
+        <p>
+          {selectedAnalysis.analysis.confidence.toUpperCase()}
+        </p>
+      </div>
+    </div>
+
+    <div className="analysis-section">
+      <h3>Recommended Actions</h3>
+      <ul>
+        {selectedAnalysis.analysis.recommended_actions.map(
+          (action, index) => (
+            <li key={index}>{action}</li>
+          )
+        )}
+      </ul>
+    </div>
+
+    <div className="analysis-section">
+      <h3>Evidence Used</h3>
+      <ul>
+        {selectedAnalysis.analysis.evidence_used.map(
+          (evidence, index) => (
+            <li key={index}>{evidence}</li>
+          )
+        )}
+      </ul>
+    </div>
+
+    <div className="analysis-section">
+      <h3>Knowledge Sources</h3>
+
+      {selectedAnalysis.sources.map((source, index) => (
+        <div
+          className="analysis-source"
+          key={source.id || index}
+        >
+          <strong>
+            {source.title ||
+              source.technique_id ||
+              source.cve_id ||
+              source.id ||
+              source.source ||
+              `Source ${index + 1}`}
+          </strong>
+
+          <p>
+            {source.text ||
+              source.content ||
+              source.description ||
+              "Source retrieved from the security knowledge base."}
+          </p>
+        </div>
+      ))}
+    </div>
+
+    <div className="analysis-section">
+      <h3>Limitations</h3>
+      <p>{selectedAnalysis.analysis.limitations}</p>
+    </div>
+  </section>
+)}
+
 
         <section className="panel integration-panel">
           <div className="integration-copy">

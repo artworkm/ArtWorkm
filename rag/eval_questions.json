@@ -1,0 +1,122 @@
+[
+  {
+    "q": "How can brute force password attacks be mitigated?",
+    "expect_technique": "T1110"
+  },
+  {
+    "q": "Which technique describes password guessing against user accounts?",
+    "expect_technique": "T1110.001"
+  },
+  {
+    "q": "How does an attacker perform password spraying?",
+    "expect_technique": "T1110.003"
+  },
+  {
+    "q": "Which technique covers scanning a network for open ports and services?",
+    "expect_technique": "T1046"
+  },
+  {
+    "q": "How do attackers actively scan external systems during reconnaissance?",
+    "expect_technique": "T1595"
+  },
+  {
+    "q": "How can network denial of service attacks be mitigated?",
+    "expect_technique": "T1498"
+  },
+  {
+    "q": "Which technique describes exhausting endpoint resources to deny service?",
+    "expect_technique": "T1499"
+  },
+  {
+    "q": "What technique covers exploiting a vulnerability in an internet-facing application?",
+    "expect_technique": "T1190"
+  },
+  {
+    "q": "How can malware communicate with command and control servers using application protocols?",
+    "expect_technique": "T1071"
+  },
+  {
+    "q": "What is network sniffing and which ATT&CK technique describes it?",
+    "expect_technique": "T1040"
+  },
+  {
+    "q": "How do I prevent SQL injection in my application code?",
+    "expect_title": "SQL_Injection"
+  },
+  {
+    "q": "What database query practices prevent SQL injection?",
+    "expect_title": "SQL_Injection"
+  },
+  {
+    "q": "How should authentication failures and security events be logged?",
+    "expect_title": "Logging"
+  },
+  {
+    "q": "What security controls should protect user authentication?",
+    "expect_title": "Authentication"
+  },
+  {
+    "q": "How can credential stuffing attacks be prevented?",
+    "expect_title": "Credential_Stuffing"
+  },
+  {
+    "q": "What input validation techniques protect web applications?",
+    "expect_title": "Input_Validation"
+  },
+  {
+    "q": "How should a web application defend against denial of service?",
+    "expect_title": "Denial_of_Service"
+  },
+  {
+    "q": "What should an analyst investigate after repeated failed logins?",
+    "expect_title": "brute-force"
+  },
+  {
+    "q": "What should an incident responder do when SQL injection is detected?",
+    "expect_title": "sql-injection"
+  },
+  {
+    "q": "How should an organization respond to a distributed denial of service incident?",
+    "expect_title": "ddos-dos"
+  },
+  {
+    "q": "What steps should an analyst take after detecting network port scanning?",
+    "expect_title": "port-scan"
+  },
+  {
+    "q": "How should a security analyst investigate suspicious botnet communication?",
+    "expect_title": "botnet-c2"
+  },
+  {
+    "q": "What are the first investigation steps for suspicious web application requests?",
+    "expect_title": "web-attack"
+  },
+  {
+    "q": "How can repeated failed logins followed by a successful login indicate account compromise?",
+    "expect_title": "brute-force"
+  },
+  {
+    "q": "What controls can reduce password guessing and credential stuffing?",
+    "expect_title": "Authentication"
+  },
+  {
+    "q": "How can SQL injection damage be limited through database permissions?",
+    "expect_title": "SQL_Injection"
+  },
+  {
+    "q": "What network controls help reduce distributed denial of service impact?",
+    "expect_title": "Denial_of_Service"
+  },
+  {
+    "q": "How can unusual DNS and outbound traffic help identify command and control activity?",
+    "expect_title": "botnet-c2"
+  },
+  {
+    "q": "Why should security logs include sufficient context for incident investigation?",
+    "expect_title": "Logging"
+  },
+  {
+    "q": "How can unnecessary exposed network services be reduced?",
+    "expect_technique": "T1046"
+  }
+]

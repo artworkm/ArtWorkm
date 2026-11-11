@@ -9,12 +9,15 @@ os.environ["SECRET_KEY"] = (
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.main import app, limiter
 from app.database import Base, engine
 
 
 @pytest.fixture(autouse=True)
 def fresh_db():
+    # Reset rate-limit counters before every test.
+    limiter._storage.reset()
+
     # Give every test a clean, isolated database.
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)

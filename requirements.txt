@@ -1,3 +1,4 @@
+
 pandas
 numpy
 scikit-learn
@@ -20,3 +21,5 @@ slowapi
 pytest
 httpx
 email-validator
+qdrant-client
+pypdf

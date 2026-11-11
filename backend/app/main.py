@@ -16,6 +16,8 @@ from slowapi.util import get_remote_address
 
 from .database import engine, Base, get_db
 from . import models
+from . import analyze
+from .rag.retrieve import search as search_knowledge
 from .schemas import RegisterIn, LoginIn, ApiKeyCreate, EventIn
 from .security import (
     hash_password,
@@ -462,3 +464,119 @@ def get_stats(
             for label, count in detection_counts
         }
     }
+
+
+# --------------------------------------------------
+# AI Analysis and Knowledge Search (Phase 2)
+# --------------------------------------------------
+
+@app.post("/detections/{det_id}/analyze")
+@limiter.limit("10/minute")
+def analyze_detection(
+    request: Request,
+    det_id: int,
+    user=Depends(current_user),
+    db: Session = Depends(get_db)
+):
+    # Find the detection only if its event belongs to this organization.
+    detection = (
+        db.query(models.DetectionResult)
+        .join(
+            models.SecurityEvent,
+            models.DetectionResult.event_id == models.SecurityEvent.id
+        )
+        .filter(
+            models.DetectionResult.id == det_id,
+            models.SecurityEvent.org_id == user.org_id
+        )
+        .first()
+    )
+
+    if not detection:
+        raise HTTPException(
+            status_code=404,
+            detail="Detection not found."
+        )
+
+    try:
+        return analyze.run_analysis(db, detection)
+
+    except analyze.AnalysisError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error)
+        )
+
+
+@app.get("/detections/{det_id}/analysis")
+def get_detection_analysis(
+    det_id: int,
+    user=Depends(current_user),
+    db: Session = Depends(get_db)
+):
+    # Retrieve the analysis only from the current organization.
+    result = (
+        db.query(models.Analysis)
+        .filter(
+            models.Analysis.detection_id == det_id,
+            models.Analysis.org_id == user.org_id
+        )
+        .order_by(models.Analysis.created_at.desc())
+        .first()
+    )
+
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis not found."
+        )
+
+    return {
+        "id": result.id,
+        "detection_id": result.detection_id,
+        "analysis": result.result,
+        "sources": result.sources,
+        "grounded": result.grounded,
+        "model": result.model,
+        "created_at": result.created_at
+    }
+
+
+@app.get("/knowledge/search")
+def search_knowledge_base(
+    q: str,
+    k: int = 5,
+    user=Depends(current_user)
+):
+    # Prevent excessively long search queries.
+    q = q.strip()
+
+    if not q:
+        raise HTTPException(
+            status_code=400,
+            detail="Search query cannot be empty."
+        )
+
+    if len(q) > 300:
+        raise HTTPException(
+            status_code=400,
+            detail="Search query cannot exceed 300 characters."
+        )
+
+    # Restrict the number of retrieved results.
+    k = max(1, min(k, 10))
+
+    try:
+        results = search_knowledge(q, k=k)
+
+        return {
+            "query": q,
+            "count": len(results),
+            "results": results
+        }
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=503,
+            detail="Knowledge base search is unavailable. Check Qdrant."
+        )

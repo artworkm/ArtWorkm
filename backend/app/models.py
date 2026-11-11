@@ -81,3 +81,38 @@ class ApiKey(Base):
     key_hash = Column(String(64), unique=True, nullable=False, index=True)
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class ThreatIndicator(Base):
+    __tablename__ = "threat_indicators"
+
+    id = Column(Integer, primary_key=True, index=True)
+    indicator = Column(String, unique=True, nullable=False, index=True)
+    type = Column(String, default="ip")
+    data = Column(JSON)
+    fetched_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Analysis(Base):
+    __tablename__ = "analyses"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    detection_id = Column(
+        Integer,
+        ForeignKey("detection_results.id"),
+        nullable=False
+    )
+
+    org_id = Column(
+        Integer,
+        ForeignKey("organizations.id"),
+        nullable=False,
+        index=True
+    )
+
+    model = Column(String)
+    result = Column(JSON)
+    sources = Column(JSON)
+    grounded = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
