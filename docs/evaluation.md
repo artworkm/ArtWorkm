@@ -154,67 +154,111 @@ These findings establish the importance of realistic evaluation, distribution-sh
 
 **Evaluation status:** Phase 1C model evaluation experiments documented.
 
-\## Phase 2 — RAG Retrieval Evaluation
+## Phase 2 — RAG Retrieval and AI Threat Analysis Evaluation
 
+### 9. RAG Retrieval Evaluation
 
+**Evaluation setup**
 
-\### Evaluation setup
+- Knowledge collection: `security_knowledge`
+- Embedding model: `nomic-embed-text`
+- Vector database: Qdrant
+- Number of evaluation questions: 30
+- Retrieval depth: Top 5 results
+- Evaluation method: Expected MITRE technique IDs or document/playbook titles checked against retrieved metadata.
 
-
-
-\- Knowledge collection: `security\_knowledge`
-
-\- Embedding model: `nomic-embed-text`
-
-\- Vector database: Qdrant
-
-\- Number of evaluation questions: 30
-
-\- Retrieval depth: Top 5 results
-
-\- Evaluation method: Expected MITRE technique IDs or document/playbook titles checked against retrieved metadata.
-
-
-
-\### Results
-
-
+**Results**
 
 | Metric | Correct retrievals | Score |
-
 |---|---:|---:|
-
 | hit@1 | 20/30 | 66.7% |
-
 | hit@3 | 26/30 | 86.7% |
-
 | hit@5 | 26/30 | 86.7% |
 
+**Result: Passed.** The hit@5 score of 86.7% exceeds the project target of 80%.
 
+**Missed questions**
 
-\*\*Result: Passed.\*\* The hit@5 score of 86.7% exceeds the project target of 80%.
+1. Network port scanning and open services — expected T1046; related Active Scanning techniques were retrieved instead.
+2. Failed logins followed by a successful login — relevant authentication material was retrieved, but the expected brute-force playbook was not in the top five.
+3. Network controls for DDoS mitigation — relevant MITRE techniques were retrieved, but the expected OWASP document was not in the top five.
+4. Reducing exposed network services — related techniques were retrieved, but T1046 was not in the top five.
 
-
-
-\### Missed questions
-
-
-
-1\. Network port scanning and open services — expected T1046; related Active Scanning techniques were retrieved instead.
-
-2\. Failed logins followed by a successful login — relevant authentication material was retrieved, but the expected brute-force playbook was not in the top five.
-
-3\. Network controls for DDoS mitigation — relevant MITRE techniques were retrieved, but the expected OWASP document was not in the top five.
-
-4\. Reducing exposed network services — related techniques were retrieved, but T1046 was not in the top five.
-
-
-
-\### Limitations
-
-
+**Limitations**
 
 This evaluation checks predefined expected identifiers and titles in the retrieved metadata. It measures retrieval coverage rather than the factual correctness of generated answers. The four missed questions provide opportunities for future retrieval improvements.
 
+### 10. Manual AI Threat Analysis Evaluation
 
+Twenty detections were manually reviewed to assess the quality of the generated AI threat analyses.
 
+Each analysis was assessed using four criteria:
+
+- Summary accuracy: 0–5 points.
+- Attack technique accuracy: 0–5 points.
+- Evidence relevance: 0–5 points.
+- Recommended action quality: 0–5 points.
+
+The maximum score per detection was 20 points.
+
+| ID | Detection | Summary | Technique | Evidence | Actions | Total |
+|---:|---|---:|---:|---:|---:|---:|
+| 1 | WebAttack | 4 | 4 | 4 | 4 | 16 |
+| 2 | BruteForce | 4 | 5 | 5 | 4 | 18 |
+| 3 | BruteForce | 4 | 5 | 5 | 5 | 19 |
+| 4 | Bot | 4 | 4 | 4 | 5 | 17 |
+| 5 | BruteForce | 4 | 5 | 5 | 5 | 19 |
+| 6 | DDoS | 5 | 5 | 5 | 4 | 19 |
+| 7 | DoS | 4 | 4 | 3 | 4 | 15 |
+| 8 | PortScan | 5 | 5 | 5 | 5 | 20 |
+| 9 | WebAttack | 4 | 4 | 4 | 4 | 16 |
+| 10 | BruteForce | 4 | 5 | 5 | 4 | 18 |
+| 11 | BruteForce | 4 | 5 | 5 | 4 | 18 |
+| 12 | WebAttack | 4 | 4 | 4 | 4 | 16 |
+| 13 | WebAttack | 4 | 4 | 4 | 4 | 16 |
+| 14 | DoS | 4 | 4 | 3 | 4 | 15 |
+| 15 | DoS | 4 | 4 | 3 | 4 | 15 |
+| 16 | DDoS | 4 | 5 | 4 | 4 | 17 |
+| 17 | DDoS | 5 | 5 | 4 | 4 | 18 |
+| 18 | PortScan | 5 | 5 | 5 | 4 | 19 |
+| 19 | PortScan | 4 | 5 | 4 | 4 | 17 |
+| 20 | Bot | 4 | 3 | 4 | 5 | 16 |
+| **Total** | **20 detections** | **84** | **89** | **85** | **84** | **344/400** |
+
+**Overall manual score: 86%.**
+
+#### 10.1 Key observations
+
+- BruteForce analyses generally retrieved relevant authentication and password-guessing knowledge, including MITRE T1110 and its sub-techniques.
+- DDoS analyses generally identified T1498 and provided relevant network traffic filtering and mitigation recommendations.
+- PortScan analyses successfully retrieved the port-scan playbook and relevant MITRE techniques T1046 and T1595.
+- WebAttack analyses commonly identified T1190, although the available event information did not independently prove successful exploitation or SQL injection.
+- Some DoS analyses included T1046, which is related to network service discovery rather than denial of service.
+- Bot analysis retrieved the botnet command-and-control playbook. However, the relationship between T1071 and the retrieved MITRE evidence should be improved.
+- Similar detections sometimes produced repetitive recommendations.
+
+#### 10.2 Confidence interpretation
+
+The Random Forest confidence value represents the model's prediction probability for the selected class. The LLM confidence represents its assessment of the available supporting evidence.
+
+These values measure different things and should not be interpreted interchangeably. A high Random Forest probability does not independently confirm an attack.
+
+The backend's `grounded` flag indicates that at least one cited source ID matches a retrieved source. It does not independently establish that every generated claim is fully supported.
+
+#### 10.3 Evaluation limitations
+
+- The manual assessment is subjective and should not be treated as a formal independent security analyst benchmark.
+- Retrieved knowledge provides context but does not independently prove that an attack occurred.
+- Synthetic or dataset-replayed detections are not equivalent to live production network telemetry.
+- Threat intelligence providers were not configured with API keys during this evaluation, so external IP reputation enrichment was limited.
+- Human verification remains necessary before containment or other consequential security actions.
+
+### 11. Phase 2 Conclusion
+
+The Phase 2 implementation demonstrates a functioning retrieval-augmented threat analysis workflow using Qdrant, Ollama embeddings, MITRE ATT&CK, CISA KEV, OWASP documentation, and security playbooks.
+
+The retrieval evaluation achieved 86.7% hit@5, exceeding the 80% target. The twenty manually reviewed AI analyses received an aggregate score of 344/400 (86%).
+
+The evaluation also identified areas for improvement, including more precise technique mapping, better event-specific evidence, reduced repetition in recommendations, and stronger validation of generated claims.
+
+The results demonstrate a working knowledge-grounded analysis capability, but do not establish that the system is ready for autonomous incident response or production deployment.

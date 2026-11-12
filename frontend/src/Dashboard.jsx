@@ -450,6 +450,7 @@ export default function Dashboard({ onLogout }) {
             <table className="detections-table">
               <thead>
                 <tr>
+                  <th>ID</th>
                   <th>DETECTION</th>
                   <th>TIME</th>
                   <th>SEVERITY</th>
@@ -459,9 +460,12 @@ export default function Dashboard({ onLogout }) {
                 </tr>
               </thead>
               <tbody>
-                {detections.slice(0, 15).map((detection) => (
-                  <tr key={detection.id}>
-                    <td>
+  {detections.slice(0, 20).map((detection) => (
+    <tr key={detection.id}>
+      <td className="detection-id-cell">
+        {detection.id}
+      </td>
+      <td>
                       <div className="attack-name">
                         <span className="attack-indicator" />
                         <strong>{detection.predicted_label}</strong>
@@ -520,7 +524,7 @@ export default function Dashboard({ onLogout }) {
 
                 {detections.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="empty-table">
+                    <td colSpan="7" className="empty-table">
                       No detections recorded yet. Your dashboard is ready
                       and waiting for security events.
                     </td>
@@ -616,32 +620,71 @@ export default function Dashboard({ onLogout }) {
       </ul>
     </div>
 
-    <div className="analysis-section">
-      <h3>Knowledge Sources</h3>
+    
+<div className="analysis-section">
+  <h3>Knowledge Sources</h3>
 
-      {selectedAnalysis.sources.map((source, index) => (
-        <div
-          className="analysis-source"
-          key={source.id || index}
-        >
-          <strong>
-            {source.title ||
-              source.technique_id ||
-              source.cve_id ||
-              source.id ||
-              source.source ||
-              `Source ${index + 1}`}
-          </strong>
+  {selectedAnalysis.sources.map((source, index) => (
+    <details
+      className="analysis-source"
+      key={source.id || index}
+    >
+      <summary>
+        <strong>
+          {source.title ||
+            source.technique_id ||
+            source.cve_id ||
+            source.ref ||
+            source.reference ||
+            source.origin ||
+            source.id ||
+            `Source ${index + 1}`}
+        </strong>
 
-          <p>
-            {source.text ||
-              source.content ||
-              source.description ||
-              "Source retrieved from the security knowledge base."}
-          </p>
-        </div>
-      ))}
-    </div>
+        {source.score != null && (
+          <span>
+            {" "} (Relevance: {
+              typeof source.score === "number"
+                ? source.score.toFixed(3)
+                : source.score
+            })
+          </span>
+        )}
+      </summary>
+
+      <p>
+        <strong>Source ID:</strong>{" "}
+        {source.id || `S${index + 1}`}
+      </p>
+
+      {source.origin && (
+        <p>
+          <strong>Origin:</strong> {source.origin}
+        </p>
+      )}
+
+      {(source.ref || source.reference) && (
+        <p>
+          <strong>Reference:</strong>{" "}
+          {source.ref || source.reference}
+        </p>
+      )}
+
+      <p>
+        <strong>Retrieved Content:</strong>
+      </p>
+
+      <p>
+        {source.snippet ||
+          source.text ||
+          source.content ||
+          source.description ||
+          "No source text was provided by the backend."}
+      </p>
+    </details>
+  ))}
+</div>
+
 
     <div className="analysis-section">
       <h3>Limitations</h3>
